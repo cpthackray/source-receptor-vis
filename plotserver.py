@@ -59,6 +59,13 @@ def plot2serial(bytes_obj):
 def dep():
     form = DataEntryDep()
 
+    # Default values:
+    uniform = 1.
+    landfill = 1.
+    wwtp = 1.
+    hazwaste = 1.
+    incinerator = 1.
+    population = 1.
     map_url, point_url = None, None
     if form.validate_on_submit():
         print(request.form)
@@ -84,7 +91,10 @@ def dep():
         map_url = plot2serial(plot_dep(cong, emis))
         point_url = plot2serial(plot_dep_point(latlist, lonlist, cong, emis))
     return render_template('dep.html', form=form,
-                           map_url=map_url, point_url=point_url)
+                           map_url=map_url, point_url=point_url,
+                           uniform=uniform, landfill=landfill,
+                           wwtp=wwtp, hazwaste=hazwaste,
+                           incinerator=incinerator, population=population)
 
 
 @app.after_request

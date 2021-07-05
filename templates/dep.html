@@ -9,39 +9,45 @@
 
 
 <div class="content-section">
-  <form method="POST" action="">
-    {{ form.hidden_tag() }}
-    <fieldset class="form-group">
-      <legend class="border-bottom mb-4">PFCA selection</legend>
-      <h5>Uniform</h5>
-      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'uniform');">
-      <input type="text" name="uniform" id="uniform" value="1">
-      <h5>Landfills</h5>
-      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'landfill');" />
-      <input type="text" name="landfill" id="landfill" value="1">
-      <h5>WWTPs</h5>
-      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'wwtp');" />
-      <input type="text" name="wwtp" id="wwtp" value="1">
-      <h5>Hazardous Waste Disposal</h5>
-      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'hazwaste');" />
-      <input type="text" name="hazwaste" id="hazwaste" value="1">
-      <h5>Incinerators</h5>
-      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'incinerator');" />
-      <input type="text" name="incinerator" id="incinerator" value="1">
-      <h5>Population-weighted</h5>
-      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'population');" />
-      <input type="text" name="population" id="population" value="1">
-      <div class="form-group">
-        {{form.congener.label}} {{ form.congener(class="form-control form-control-lg") }}
+  <div class="content-subsection">
+    <form method="POST" action="">
+      {{ form.hidden_tag() }}
+      <fieldset class="form-group">
+        <legend class="border-bottom mb-4">PFCA selection</legend>
+        <h5>Uniform</h5>
+        <input type="range" min="0" max="10" value="{{uniform}}" onchange="updateTextInput(this.value,'uniform');">
+        <input type="text" name="uniform" id="uniform" value="{{uniform}}">
+        <h5>Landfills</h5>
+        <input type="range" min="0" max="10" value="{{landfill}}" onchange="updateTextInput(this.value,'landfill');" />
+        <input type="text" name="landfill" id="landfill" value="{{landfill}}">
+        <h5>WWTPs</h5>
+        <input type="range" min="0" max="10" value="{{wwtp}}" onchange="updateTextInput(this.value,'wwtp');" />
+        <input type="text" name="wwtp" id="wwtp" value="{{wwtp}}">
+        <h5>Hazardous Waste Disposal</h5>
+        <input type="range" min="0" max="10" value="{{hazwaste}}" onchange="updateTextInput(this.value,'hazwaste');" />
+        <input type="text" name="hazwaste" id="hazwaste" value="{{hazwaste}}">
+        <h5>Incinerators</h5>
+        <input type="range" min="0" max="10" value="{{incinerator}}"
+          onchange="updateTextInput(this.value,'incinerator');" />
+        <input type="text" name="incinerator" id="incinerator" value="{{incinerator}}">
+        <h5>Population-weighted</h5>
+        <input type="range" min="0" max="10" value="{{population}}"
+          onchange="updateTextInput(this.value,'population');" />
+        <input type="text" name="population" id="population" value="{{population}}">
+        <div class="form-group">
+          {{form.congener.label}} {{ form.congener(class="form-control form-control-lg") }}
 
-        {{form.latlon.label}} {{ form.latlon(class="form-control form-control-lg") }}
+          {{form.latlon.label}} {{ form.latlon(class="form-control form-control-lg") }}
+        </div>
+      </fieldset>
+      <div class="form-group">
+        {{ form.submit(class="btn btn-outline-info") }}
       </div>
-    </fieldset>
-    <div class="form-group">
-      {{ form.submit(class="btn btn-outline-info") }}
-    </div>
-  </form>
-  <img src="data:image/png;base64, {{ map_url }}" style="width:600px;height:400px">
-  <img src="data:image/png;base64, {{ point_url }}" style="width:600px;height:400px">
+    </form>
+  </div>
+  <div class="content-subsection">
+    <img src="data:image/png;base64, {{ map_url }}" style="width:600px;height:400px">
+    <img src="data:image/png;base64, {{ point_url }}" style="width:600px;height:400px">
+  </div>
 </div>
 {% endblock content %}

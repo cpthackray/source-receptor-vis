@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script>
+  function updateTextInput(val, id) {
+    document.getElementById(id).value = val;
+  }
+</script>
+
+
+<div class="content-section">
+  <form method="POST" action="">
+    {{ form.hidden_tag() }}
+    <fieldset class="form-group">
+      <legend class="border-bottom mb-4">PFCA selection</legend>
+      <h5>Uniform</h5>
+      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'uniform');">
+      <input type="text" name="uniform" id="uniform" value="1">
+      <h5>Landfills</h5>
+      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'landfill');" />
+      <input type="text" name="landfill" id="landfill" value="1">
+      <h5>WWTPs</h5>
+      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'wwtp');" />
+      <input type="text" name="wwtp" id="wwtp" value="1">
+      <h5>Hazardous Waste Disposal</h5>
+      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'hazwaste');" />
+      <input type="text" name="hazwaste" id="hazwaste" value="1">
+      <h5>Incinerators</h5>
+      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'incinerator');" />
+      <input type="text" name="incinerator" id="incinerator" value="1">
+      <h5>Population-weighted</h5>
+      <input type="range" min="0" max="10" value="1" onchange="updateTextInput(this.value,'population');" />
+      <input type="text" name="population" id="population" value="1">
+      <div class="form-group">
+        {{form.congener.label}} {{ form.congener(class="form-control form-control-lg") }}
+
+        {{form.latlon.label}} {{ form.latlon(class="form-control form-control-lg") }}
+      </div>
+    </fieldset>
+    <div class="form-group">
+      {{ form.submit(class="btn btn-outline-info") }}
+    </div>
+  </form>
+  <img src="data:image/png;base64, {{ map_url }}" style="width:600px;height:400px">
+  <img src="data:image/png;base64, {{ point_url }}" style="width:600px;height:400px">
+</div>
+{% endblock content %}

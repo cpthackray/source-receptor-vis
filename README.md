@@ -2,6 +2,7 @@
 
 Interactive source-receptor relationship visualization for atmospheric PFAS.
 
+<img src="static/ex_web_pfas.png" alt="web app example" width="500"/>
 
 # Prerequisites
  - Flask

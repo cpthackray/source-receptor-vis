@@ -7,112 +7,9 @@ import numpy as np
 from cartopy import feature as cfeature
 import xarray as xr
 import io
+from maps import make_map_base, add_colorbar, add_gridded, add_points
 
 plt.style.use('seaborn-deep')
-
-
-def plotmap(lons,
-            lats,
-            gridded=None,
-            pointdata=None,
-            projection="Mollweide",
-            proj_args={},
-            logcolor=False,
-            clabel='',
-            **kwargs):
-    """Plot gridded data on map.
-    Optionally add pointdata sequence of (lon,lat,data)."""
-    cl = proj_args.get('central_longitude', 180)
-    extent = proj_args.get('extent', None)
-    if projection.lower() in ['mollweide']:
-        proj = ccrs.Mollweide(central_longitude=cl)
-    elif projection.lower() in ['platecarree', 'flat']:
-        proj = ccrs.PlateCarree(central_longitude=cl)
-
-    if pointdata is not None:
-        plons, plats, pdata = pointdata[0, :], pointdata[1, :], pointdata[2, :]
-        pmax, pmin = np.max(pdata), np.min(pdata)
-    if gridded is not None:
-        gmax, gmin = np.max(gridded), np.min(gridded)
-
-    if (gridded is not None) and (pointdata is not None):
-        vvmax = max(gmax, pmax)
-        vvmin = min(gmin, pmin)
-    elif gridded is not None:
-        vvmax, vvmin = gmax, gmin
-    elif pointdata is not None:
-        vvmax, vvmin = pmax, pmin
-    else:
-        print('???')
-
-    vvmin = kwargs.get('vmin', vvmin)
-    vvmax = kwargs.get('vmax', vvmax)
-
-    fig = plt.figure(figsize=(12, 8))
-    ax = plt.axes(projection=proj)  # ccrs.PlateCarree())
-    ourcmap = kwargs.get('cmap', 'jet')
-    if gridded is not None:
-        c = ax.pcolormesh(lons,
-                          lats,
-                          gridded,
-                          vmax=vvmax,
-                          vmin=vvmin,
-                          linewidth=0.5,
-                          edgecolor='k',
-                          antialiased=True,
-                          transform=ccrs.PlateCarree(),
-                          cmap=ourcmap)
-    else:
-        ax.pcolormesh(lons,
-                      lats,
-                      np.zeros((len(lats), len(lons))) + np.nan,
-                      transform=ccrs.PlateCarree())
-    if pointdata is not None:
-        c = plt.scatter(plons,
-                        plats,
-                        marker='o',
-                        norm=Normalize(vvmin, vvmax),
-                        transform=ccrs.PlateCarree(),
-                        c=pdata,
-                        edgecolor='w',
-                        cmap=ourcmap)
-
-    ax.coastlines(color='w')
-    # ax.gridlines()
-    ax.add_feature(
-        cfeature.NaturalEarthFeature('cultural',
-                                     'admin_1_states_provinces_lines',
-                                     '50m',
-                                     edgecolor='w',
-                                     facecolor='none',
-                                     linestyle='-'))
-    ax.add_feature(cfeature.BORDERS, color='w')
-    ax.add_feature(cfeature.LAKES, edgecolor='w', facecolor='none')
-
-    ftitle = kwargs.get('title', '')
-    ax.set_title(ftitle, fontsize=15)
-
-    if extent is not None:
-        ax.set_extent(extent)
-        ratio = abs((extent[0] - extent[1]) / (extent[2] - extent[3]))
-    else:
-        ratio = 1.0
-
-    if logcolor:
-        cticks = np.arange(vvmin, vvmax, 0.5)
-        cticklabels = [f'{10**x:.2f}' for x in cticks]
-    else:
-        cticks = np.linspace(vvmin, vvmax, 9)
-        cticklabels = [f'{x:.2f}' for x in cticks]
-    cbar = fig.colorbar(c,
-                        orientation='horizontal',
-                        fraction=0.046 * ratio,
-                        pad=0.01,
-                        ticks=cticks)
-    cbar.set_label(clabel, fontsize=15)
-    cbar.ax.set_xticklabels(cticklabels, fontsize=15)
-
-    return fig
 
 
 unitconv = 1e12 * 3600 * 24 * 365  # kg/s to ng/yr
@@ -186,11 +83,16 @@ def plot_dep(congener, E={'population': 1.0}):
     for emisname, e in E.items():
         pdata += get_IF(congener, emisname) * e
 
-    figd = plotmap(lons[:xshift], lats, np.log10(pdata)[:, :xshift], vmax=np.log10(np.max(pdata)),
-                   vmin=-2, projection='platecarree',
-                   clabel='Deposition [ng m$^{-2}$ yr$^{-1}$]',
-                   title=f"{congname_lookup[cong]} Total deposition", logcolor=True,
-                   proj_args={'extent': (-128., -62.+xshift/2, 24., 48.)})
+    ax = make_map_base(projection='platecarree',
+                       proj_args={'extent': (-128., -62.+xshift/2, 24., 48.)},
+                       figsize=(12, 8), land='#b6a6a3')
+    cg = add_gridded(ax, lons[:xshift], lats, np.log10(pdata)[:, :xshift], cmap='jet',
+                     vmin=-2, vmax=np.log10(np.max(pdata)), gridlines='gray')
+
+    add_colorbar(
+        ax, cg, clabel='Deposition [ng m$^{-2}$ yr$^{-1}$]', logcolor=True, nticks=6)
+
+    plt.title(f"{congname_lookup[cong]} Total deposition", fontsize=15)
     bytes_image = io.BytesIO()
     plt.savefig(bytes_image, format='png', bbox_inches='tight')
     bytes_image.seek(0)

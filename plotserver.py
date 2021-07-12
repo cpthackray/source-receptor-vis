@@ -88,7 +88,8 @@ def dep():
         # lats, lons = form.latitude.data, form.longitude.data
         # latlist, lonlist = lats.split(','), lons.split(',')
         latlist, lonlist = form.get_latlonlist()
-        map_url = plot2serial(plot_dep(cong, emis))
+        map_url = plot2serial(
+            plot_dep(cong, emis, latlist=latlist, lonlist=lonlist))
         point_url = plot2serial(plot_dep_point(latlist, lonlist, cong, emis))
     return render_template('dep.html', form=form,
                            map_url=map_url, point_url=point_url,

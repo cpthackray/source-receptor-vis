@@ -74,7 +74,7 @@ def get_IF(congener, emisname):
     return pdata
 
 
-def plot_dep(congener, E={'population': 1.0}):
+def plot_dep(congener, E={'population': 1.0}, latlist=[], lonlist=[]):
     congs = [congener]
     xshift = -10
 
@@ -88,6 +88,10 @@ def plot_dep(congener, E={'population': 1.0}):
                        figsize=(12, 8), land='#b6a6a3')
     cg = add_gridded(ax, lons[:xshift], lats, np.log10(pdata)[:, :xshift], cmap='jet',
                      vmin=-2, vmax=np.log10(np.max(pdata)), gridlines='gray')
+    if len(latlist) > 0:
+        ax.scatter([float(x) for x in lonlist], [float(y) for y in latlist], marker='s',
+                   s=20, color='k',
+                   transform=ccrs.PlateCarree(), zorder=1000)
 
     add_colorbar(
         ax, cg, clabel='Deposition [ng m$^{-2}$ yr$^{-1}$]', logcolor=True, nticks=6)

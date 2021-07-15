@@ -11,6 +11,7 @@ Interactive source-receptor relationship visualization for atmospheric PFAS.
  - numpy
  - matplotlib
  - xarray
+ - [srtools](https://github.com/cpthackray/source-receptor-tools)
 
 
 # Post-installation setup

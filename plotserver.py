@@ -68,7 +68,6 @@ def dep():
     population = 1.
     map_url, point_url = None, None
     if form.validate_on_submit():
-        print(request.form)
 
         uniform = request.form['uniform']
         landfill = request.form['landfill']

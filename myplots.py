@@ -8,54 +8,12 @@ from cartopy import feature as cfeature
 import xarray as xr
 import io
 from maps import make_map_base, add_colorbar, add_gridded, add_points
+from srtools import InfluenceFunction
 
 plt.style.use('seaborn-deep')
 
-
-unitconv = 1e12 * 3600 * 24 * 365  # kg/s to ng/yr
-MW = 500  # g/mol
-unitconv_c = 1e12 * 2.5e25 * MW / 6.02e23  # mol/mol to pg/m3
-
-
-def get_data(name, congs=["PFHXA"]):
-    root = name.rsplit("_")[0]
-    budget_ds = xr.open_dataset(
-        f"{DATAPATH}archive/{name}/budget.nc")
-    conc_ds = xr.open_dataset(
-        f"{DATAPATH}archive/{name}/conc.nc")
-    emis_ds = xr.open_dataset(
-        f"{DATAPATH}archive/{root}/emis.nc")
-    area = emis_ds['AREA'].values
-    lats, lons = budget_ds['lat'].values, budget_ds['lon'].values
-
-    emis_ngm2yr = emis_ds['PFAS_FT6'][0, 0, :,
-                                      :].values * unitconv  # kg/s/cell to ng/m2/yr
-    em_ss = (emis_ds['PFAS_PFOASSL'][0, 0, :, :].values +
-             emis_ds['PFAS_PFOASSS'][0, 0, :, :].values) * unitconv
-    conc_pgm3 = (conc_ds['SpeciesConc_FTOH62'][0, 0, :, :].values +
-                 conc_ds['SpeciesConc_FTOLE62'][0, 0, :, :].values)*unitconv_c
-    tote = np.sum(emis_ngm2yr*area) * 1e-12 * 1e-3  # ng/m2/yr to t/yr
-    tote_ss = np.sum(em_ss*area) * 1e-12 * 1e-3  # ng/m2/yr to t/yr
-
-    dep_ngm2yr, totd = {}, {}
-    for cong in congs:
-        dep_kgs = budget_ds[f'BudgetWetDepFull_{cong}'].values + budget_ds[f'BudgetWetDepFull_{cong}P'].values \
-            + budget_ds[f'BudgetEmisDryDepFull_{cong}'].values + \
-            budget_ds[f'BudgetEmisDryDepFull_{cong}P'].values
-        totd[cong] = -np.sum(dep_kgs) * 3600 * 24 * 365 * 1e-3  # kg/s to t/yr
-        dep_ngm2yr[cong] = unitconv * -np.mean(dep_kgs, axis=0) / area
-        totd['sum'] = totd.get('sum', 0) + totd[cong]
-
-    dep_kgs = budget_ds[f'BudgetWetDepFull_PFOASSL'].values + budget_ds[f'BudgetWetDepFull_PFOASSS'].values \
-        + 0  # budget_ds[f'BudgetEmisDryDepFull_PFOASSL'].values + budget_ds[f'BudgetEmisDryDepFull_PFOASSS'].values \
-    #- (emis_ds['PFAS_PFOASSL'][:,0,:,:].values + emis_ds['PFAS_PFOASSS'][:,0,:,:].values)
-    dep_ss = unitconv * -np.mean(dep_kgs, axis=0) / area
-
-    return dep_ngm2yr, emis_ngm2yr, totd, tote, conc_pgm3, dep_ss, tote_ss
-
-
-conc_ds = xr.open_dataset('backend/placeholder_data.nc')
-lats, lons = conc_ds['lat'].values, conc_ds['lon'].values
+influence_function = InfluenceFunction(f'{DATAPATH}placeholder_data.nc')
+lons, lats = influence_function.get_lonslats()
 
 legal_congeners = ['PFHXA', 'PFHPA', 'PFPA', 'PFBUA', 'PFPRA', 'TFA']
 legal_congener_names = ['PFHxA', 'PFHpA', 'PFPA', 'PFBA', 'PFPrA', 'TFA']
@@ -67,21 +25,13 @@ legal_emisnames = ['Uniformly distributed', 'Hazardous waste disposal',
                    'Population-weighted']
 
 
-def get_IF(congener, emisname):
-    name = f'{emisname}_ole'
-    ds = xr.open_dataset('backend/placeholder_data.nc')
-    pdata = ds[name+'_'+congener].values[0, :, :]
-    return pdata
-
-
 def plot_dep(congener, E={'population': 1.0}, latlist=[], lonlist=[]):
     congs = [congener]
     xshift = -10
 
     cong = congener
-    pdata = get_IF(congener, 'population') * 0.0
-    for emisname, e in E.items():
-        pdata += get_IF(congener, emisname) * e
+
+    pdata = influence_function.get_species_exposure(E, congener, 'deposition')
 
     ax = make_map_base(projection='platecarree',
                        proj_args={'extent': (-128., -62.+xshift/2, 24., 48.)},
@@ -107,16 +57,16 @@ def plot_dep_point(latlist, lonlist, congener, E):
     if (len(latlist) < 1) or (len(lonlist) < 1):
         plt.figure(figsize=(7.5, 5))
     else:
-        ds = xr.open_dataset('backend/placeholder_data.nc')
-        lats, lons = ds['lat'].values, ds['lon'].values
         data = {}
         for emis in legal_emistypes:
             data[emis] = []
             name = emis + '_ole' + '_' + congener
+            griddata = influence_function.get_species_exposure({emis: E.get(emis, 0)},
+                                                               congener, 'deposition')
             for lat, lon in zip(latlist, lonlist):
                 i = np.argmin(np.abs(int(lon)-lons))
                 j = np.argmin(np.abs(int(lat)-lats))
-                data[emis].append(ds[name].values[0, j, i]*E.get(emis, 0))
+                data[emis].append(griddata[j, i])
         plt.figure(figsize=(7.5, 5))
         x = range(len(latlist))
         bartops = np.zeros_like(x).tolist()
